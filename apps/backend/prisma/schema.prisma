@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MerchantStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+enum TransactionStatus {
+  DETECTED
+  CONFIRMING
+  CONFIRMED
+  FAILED
+}
+
+enum Network {
+  TRON
+  ETHEREUM
+}
+
+model Merchant {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  password_hash  String
+  api_key        String         @unique
+  status         MerchantStatus @default(PENDING)
+  callback_url   String?
+  secret_key     String?
+  refresh_token  String?
+  password_reset_token_hash String?
+  password_reset_expires_at  DateTime?
+  role           String         @default("MERCHANT")
+  created_at     DateTime       @default(now())
+  wallets        Wallet[]
+  invoices       Invoice[]
+  withdrawals    Withdrawal[]
+  webhook_logs   WebhookLog[]
+}
+
+model Wallet {
+  id                    String   @id @default(cuid())
+  merchant_id           String
+  address               String   @unique
+  network               Network
+  encrypted_private_key  String
+  created_at            DateTime @default(now())
+  merchant              Merchant @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  merchant_id    String
+  invoice_number String        @unique
+  amount         Decimal       @db.Decimal(18, 8)
+  currency       String
+  network        Network
+  wallet_address String
+  status         InvoiceStatus @default(PENDING)
+  expired_at     DateTime
+  created_at     DateTime      @default(now())
+  merchant       Merchant      @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  webhook_logs   WebhookLog[]
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  invoice_id    String
+  tx_hash       String            @unique
+  amount        Decimal           @db.Decimal(18, 8)
+  network       Network
+  confirmations Int               @default(0)
+  status        TransactionStatus @default(DETECTED)
+  confirmed_at  DateTime?
+  created_at    DateTime          @default(now())
+  invoice       Invoice           @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+}
+
+model Withdrawal {
+  id                 String           @id @default(cuid())
+  merchant_id        String
+  amount             Decimal          @db.Decimal(18, 8)
+  destination_wallet String
+  network            Network
+  status             WithdrawalStatus @default(PENDING)
+  created_at         DateTime         @default(now())
+  merchant           Merchant         @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+}
+
+model WebhookLog {
+  id            String   @id @default(cuid())
+  merchant_id   String
+  invoice_id    String
+  payload       Json
+  response_code Int
+  created_at    DateTime @default(now())
+  merchant      Merchant @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+  invoice       Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actor_id    String?
+  actor_role  String?
+  action      String
+  method      String
+  path        String
+  resource    String?
+  resource_id String?
+  status_code Int
+  ip          String?
+  user_agent  String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+}

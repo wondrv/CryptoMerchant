@@ -1,0 +1,13 @@
+node_modules
+.next
+dist
+coverage
+*.log
+.env
+.env.local
+.env.production
+apps/backend/dist
+apps/backend/node_modules
+apps/backend/prisma/dev.db
+apps/frontend/dist
+apps/frontend/node_modules

@@ -1,0 +1,21 @@
+{
+  "name": "cryptomerchant",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "build": "npm run build -w @cryptomerchant/backend && npm run build -w @cryptomerchant/frontend",
+    "dev": "npm run start:dev -w @cryptomerchant/backend",
+    "dev:backend": "npm run start:dev -w @cryptomerchant/backend",
+    "dev:frontend": "npm run dev -w @cryptomerchant/frontend",
+    "lint": "npm run lint -w @cryptomerchant/backend && npm run lint -w @cryptomerchant/frontend",
+    "test": "npm run test -w @cryptomerchant/backend",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.0",
+    "typescript": "^5.8.3"
+  }
+}
